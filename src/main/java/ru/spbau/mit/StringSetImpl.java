@@ -27,9 +27,7 @@ public class StringSetImpl implements StreamSerializable, StringSet {
                     }
                 }
 
-                if (isTerminal) {
-                    mask.set(ALPHABET_SIZE_IN_BYTE - 2);
-                }
+                mask.set(ALPHABET_SIZE_IN_BYTE - 2, isTerminal);
 
                 mask.set(ALPHABET_SIZE_IN_BYTE - 1);
 
@@ -49,7 +47,7 @@ public class StringSetImpl implements StreamSerializable, StringSet {
         public void deserialize(InputStream in) throws SerializationException {
             try {
                 byte[] inputByte = new byte[ALPHABET_SIZE_IN_BYTE/8];
-                BitSet mask = new BitSet(ALPHABET_SIZE_IN_BYTE);
+                BitSet mask = null;
                 in.read(inputByte);
                 mask = mask.valueOf(inputByte);
 
@@ -57,7 +55,7 @@ public class StringSetImpl implements StreamSerializable, StringSet {
 
                 numberOfTerminalWithThisPrefix = in.read();
                 for (int i = 0; i < ALPHABET_SIZE; ++i) {
-                    if (mask.get(i) == true) {
+                    if (mask.get(i)) {
                         nextNode[i] = new Node();
                         nextNode[i].deserialize(in);
                     }
@@ -109,10 +107,7 @@ public class StringSetImpl implements StreamSerializable, StringSet {
             return false;
         }
 
-        if (cur.isTerminal) {
-            return true;
-        }
-        return false;
+        return cur.isTerminal;
     }
 
     @Override
