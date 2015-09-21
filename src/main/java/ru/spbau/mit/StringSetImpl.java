@@ -156,7 +156,7 @@ public class StringSetImpl implements StreamSerializable, StringSet {
             cur = cur.nextNode[charToInt(element.charAt(i))];
             cur.numberOfTerminalWithThisPrefix--;
         }
-        return false;
+        return true;
     }
 
     @Override
@@ -177,3 +177,4 @@ public class StringSetImpl implements StreamSerializable, StringSet {
         return cur.numberOfTerminalWithThisPrefix;
     }
 }
+
