@@ -10,7 +10,8 @@ import java.util.BitSet;
  */
 public class StringSetImpl implements StreamSerializable, StringSet {
     private class Node implements StreamSerializable {
-        final static private int ALPHABET_SIZE = 52, ALPHABET_SIZE_IN_BYTE = (ALPHABET_SIZE + 9) / 8;
+        private static final int ALPHABET_SIZE = 52;
+        private static final int ALPHABET_SIZE_IN_BYTE = ((ALPHABET_SIZE + 9) / 8)*8;
         private Node[] nextNode = new Node[ALPHABET_SIZE];
         private boolean isTerminal;
         private int numberOfTerminalWithThisPrefix;
@@ -18,7 +19,7 @@ public class StringSetImpl implements StreamSerializable, StringSet {
         @Override
         public void serialize(OutputStream out) throws SerializationException {
             try {
-                BitSet mask = new BitSet(ALPHABET_SIZE_IN_BYTE*8);
+                BitSet mask = new BitSet(ALPHABET_SIZE_IN_BYTE);
 
                 for (int i = 0; i < ALPHABET_SIZE; i++) {
                     if (nextNode[i] != null) {
@@ -27,10 +28,10 @@ public class StringSetImpl implements StreamSerializable, StringSet {
                 }
 
                 if (isTerminal) {
-                    mask.set(ALPHABET_SIZE_IN_BYTE*8 - 2);
+                    mask.set(ALPHABET_SIZE_IN_BYTE - 2);
                 }
 
-                mask.set(ALPHABET_SIZE_IN_BYTE * 8 - 1);
+                mask.set(ALPHABET_SIZE_IN_BYTE - 1);
 
                 out.write(mask.toByteArray());
                 out.write(numberOfTerminalWithThisPrefix);
@@ -47,18 +48,13 @@ public class StringSetImpl implements StreamSerializable, StringSet {
         @Override
         public void deserialize(InputStream in) throws SerializationException {
             try {
-                byte[] InputByte = new byte[ALPHABET_SIZE_IN_BYTE];
-                BitSet mask = new BitSet(ALPHABET_SIZE_IN_BYTE*8);;
-                in.read(InputByte);
-                for (int i = 0; i < ALPHABET_SIZE_IN_BYTE*8; i++) {
-                    if ((InputByte[i/8] & (1 << (i & 7))) != 0) {
-                        mask.set(i);
-                    }
-                }
+                byte[] inputByte = new byte[ALPHABET_SIZE_IN_BYTE/8];
+                BitSet mask = new BitSet(ALPHABET_SIZE_IN_BYTE);
+                in.read(inputByte);
+                mask = mask.valueOf(inputByte);
 
-                if (mask.get(ALPHABET_SIZE_IN_BYTE*8 - 2) == true) {
-                    isTerminal = true;
-                }
+                isTerminal = mask.get(ALPHABET_SIZE_IN_BYTE - 2);
+
                 numberOfTerminalWithThisPrefix = in.read();
                 for (int i = 0; i < ALPHABET_SIZE; ++i) {
                     if (mask.get(i) == true) {
@@ -72,11 +68,7 @@ public class StringSetImpl implements StreamSerializable, StringSet {
 
         }
     }
-    private Node root;
-
-    StringSetImpl() {
-        root = new Node();
-    }
+    private Node root = new Node();
 
     private static int charToInt(char c) {
         if (c >= 'a' && c <= 'z') {
@@ -85,7 +77,7 @@ public class StringSetImpl implements StreamSerializable, StringSet {
             return 26 + c - 'A';
         }
     }
-    
+
     @Override
     public void serialize(OutputStream out) {
         root.serialize(out);
@@ -95,22 +87,24 @@ public class StringSetImpl implements StreamSerializable, StringSet {
     public void deserialize(InputStream in) {
         root.deserialize(in);
     }
-    
-    private Node GoToTheEndOfElement(String element) {
+
+    private Node goToTheEndOfElement(String element, int flag) {
         Node cur = root;
+        cur.numberOfTerminalWithThisPrefix += flag;
         for (int i = 0; i < element.length(); i++) {
             int position = charToInt(element.charAt(i));
             if (cur.nextNode[position] == null) {
                 return null;
             }
             cur = cur.nextNode[position];
+            cur.numberOfTerminalWithThisPrefix += flag;
         }
         return cur;
     }
-    
+
     @Override
     public boolean contains(String element) {
-        Node cur =  GoToTheEndOfElement(element);
+        Node cur =  goToTheEndOfElement(element, 0);
         if (cur == null) {
             return false;
         }
@@ -128,41 +122,32 @@ public class StringSetImpl implements StreamSerializable, StringSet {
         }
 
         Node cur = root;
+        cur.numberOfTerminalWithThisPrefix++;
         for (int i = 0; i < element.length(); i++) {
             int position = charToInt(element.charAt(i));
             if (cur.nextNode[position] == null) {
                 cur.nextNode[position] = new Node();
             }
             cur = cur.nextNode[position];
+            cur.numberOfTerminalWithThisPrefix++;
         }
 
         cur.isTerminal = true;
-        cur = root;
-        cur.numberOfTerminalWithThisPrefix++;
-        for (int i = 0; i < element.length(); i++) {
-            cur = cur.nextNode[charToInt(element.charAt(i))];
-            cur.numberOfTerminalWithThisPrefix++;
-        }
         return true;
     }
 
     @Override
     public boolean remove(String element) {
-        Node cur =  GoToTheEndOfElement(element);
+        if (!contains(element)) {
+            return false;
+        }
+
+        Node cur =  goToTheEndOfElement(element, -1);
         if (cur == null) {
             return false;
         }
 
-        if (cur.isTerminal == false) {
-            return false;
-        }
         cur.isTerminal = false;
-        cur = root;
-        cur.numberOfTerminalWithThisPrefix--;
-        for (int i = 0; i < element.length(); i++) {
-            cur = cur.nextNode[charToInt(element.charAt(i))];
-            cur.numberOfTerminalWithThisPrefix--;
-        }
         return true;
     }
 
@@ -173,10 +158,7 @@ public class StringSetImpl implements StreamSerializable, StringSet {
 
     @Override
     public int howManyStartsWithPrefix(String prefix) {
-        Node cur =  GoToTheEndOfElement(prefix);
-        if (cur == null) {
-            return 0;
-        }
-        return cur.numberOfTerminalWithThisPrefix;
+        Node cur =  goToTheEndOfElement(prefix, 0);
+        return cur == null ? 0 : cur.numberOfTerminalWithThisPrefix;
     }
 }
