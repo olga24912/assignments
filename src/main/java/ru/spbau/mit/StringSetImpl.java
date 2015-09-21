@@ -11,7 +11,7 @@ import java.util.BitSet;
 public class StringSetImpl implements StreamSerializable, StringSet {
     private class Node implements StreamSerializable {
         private static final int ALPHABET_SIZE = 52;
-        private static final int ALPHABET_SIZE_IN_BYTE = ((ALPHABET_SIZE + 9) / 8)*8;
+        private static final int ALPHABET_SIZE_IN_BYTE = ((ALPHABET_SIZE + 8) / 8)*8;
         private Node[] nextNode = new Node[ALPHABET_SIZE];
         private boolean isTerminal;
         private int numberOfTerminalWithThisPrefix;
@@ -27,11 +27,17 @@ public class StringSetImpl implements StreamSerializable, StringSet {
                     }
                 }
 
-                mask.set(ALPHABET_SIZE_IN_BYTE - 2, isTerminal);
+                mask.set(ALPHABET_SIZE_IN_BYTE - 1, isTerminal);
 
-                mask.set(ALPHABET_SIZE_IN_BYTE - 1);
 
-                out.write(mask.toByteArray());
+                byte[] outputByte = new byte[ALPHABET_SIZE_IN_BYTE/8];
+                for (int i = 0; i < ALPHABET_SIZE_IN_BYTE; i++) {
+                    if (mask.get(i)) {
+                        outputByte[i / 8] |= (1 << (i & 7));
+                    }
+                }
+
+                out.write(outputByte);
                 out.write(numberOfTerminalWithThisPrefix);
                 for (int i = 0; i < ALPHABET_SIZE; i++) {
                     if (nextNode[i] != null) {
@@ -51,7 +57,7 @@ public class StringSetImpl implements StreamSerializable, StringSet {
                 in.read(inputByte);
                 mask = mask.valueOf(inputByte);
 
-                isTerminal = mask.get(ALPHABET_SIZE_IN_BYTE - 2);
+                isTerminal = mask.get(ALPHABET_SIZE_IN_BYTE - 1);
 
                 numberOfTerminalWithThisPrefix = in.read();
                 for (int i = 0; i < ALPHABET_SIZE; ++i) {
