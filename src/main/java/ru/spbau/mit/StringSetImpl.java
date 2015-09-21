@@ -3,37 +3,38 @@ package ru.spbau.mit;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.BitSet;
 
 /**
  * Created by olga on 19.09.15.
  */
 public class StringSetImpl implements StreamSerializable, StringSet {
-    private class Node implements StreamSerializable{
-        final static int ALPHABET_SIZE = 52;
-        Node[] nextNode;
-        boolean isTerminal;
-        int numberOfTerminalWithThisPrefix;
-
-        Node() {
-            nextNode = new Node[ALPHABET_SIZE];
-        }
+    private class Node implements StreamSerializable {
+        final static private int ALPHABET_SIZE = 52, ALPHABET_SIZE_IN_BYTE = (ALPHABET_SIZE + 9) / 8;
+        private Node[] nextNode = new Node[ALPHABET_SIZE];
+        private boolean isTerminal;
+        private int numberOfTerminalWithThisPrefix;
 
         @Override
         public void serialize(OutputStream out) throws SerializationException {
             try {
-                byte[] mask = new byte[(ALPHABET_SIZE + 1 + 7)/8];
-                for (int i = 0; i < ALPHABET_SIZE; ++i) {
+                BitSet mask = new BitSet(ALPHABET_SIZE_IN_BYTE*8);
+
+                for (int i = 0; i < ALPHABET_SIZE; i++) {
                     if (nextNode[i] != null) {
-                        mask[i/8] |= (1 << (i & 7));
+                        mask.set(i);
                     }
                 }
 
                 if (isTerminal) {
-                    mask[(ALPHABET_SIZE + 1 + 7) / 8 - 1] |= (1 << 7);
+                    mask.set(ALPHABET_SIZE_IN_BYTE*8 - 2);
                 }
-                out.write(mask);
+
+                mask.set(ALPHABET_SIZE_IN_BYTE * 8 - 1);
+
+                out.write(mask.toByteArray());
                 out.write(numberOfTerminalWithThisPrefix);
-                for (int i = 0; i < ALPHABET_SIZE; ++i) {
+                for (int i = 0; i < ALPHABET_SIZE; i++) {
                     if (nextNode[i] != null) {
                         nextNode[i].serialize(out);
                     }
@@ -46,20 +47,21 @@ public class StringSetImpl implements StreamSerializable, StringSet {
         @Override
         public void deserialize(InputStream in) throws SerializationException {
             try {
-                byte[] mask = new byte[(ALPHABET_SIZE + 1 + 7)/8];
-                in.read(mask);
-                for (int i = 0; i < ALPHABET_SIZE; ++i) {
-                    if (nextNode[i] != null) {
-                        mask[i/8] |= (1 << (i & 7));
+                byte[] InputByte = new byte[ALPHABET_SIZE_IN_BYTE];
+                BitSet mask = new BitSet(ALPHABET_SIZE_IN_BYTE*8);;
+                in.read(InputByte);
+                for (int i = 0; i < ALPHABET_SIZE_IN_BYTE*8; i++) {
+                    if ((InputByte[i/8] & (1 << (i & 7))) != 0) {
+                        mask.set(i);
                     }
                 }
 
-                if (((mask[(ALPHABET_SIZE + 1 + 7) / 8 - 1] >> 7) & 1) == 1) {
+                if (mask.get(ALPHABET_SIZE_IN_BYTE*8 - 2) == true) {
                     isTerminal = true;
                 }
                 numberOfTerminalWithThisPrefix = in.read();
                 for (int i = 0; i < ALPHABET_SIZE; ++i) {
-                    if ((mask[i/8] & (1 << (i & 7))) != 0) {
+                    if (mask.get(i) == true) {
                         nextNode[i] = new Node();
                         nextNode[i].deserialize(in);
                     }
@@ -70,22 +72,20 @@ public class StringSetImpl implements StreamSerializable, StringSet {
 
         }
     }
-
-    Node root;
+    private Node root;
 
     StringSetImpl() {
         root = new Node();
     }
 
-    private int charToInt(char c) {
+    private static int charToInt(char c) {
         if (c >= 'a' && c <= 'z') {
             return c - 'a';
         } else {
             return 26 + c - 'A';
         }
     }
-
-
+    
     @Override
     public void serialize(OutputStream out) {
         root.serialize(out);
@@ -95,21 +95,47 @@ public class StringSetImpl implements StreamSerializable, StringSet {
     public void deserialize(InputStream in) {
         root.deserialize(in);
     }
-
-    @Override
-    public boolean add(String element) {
+    
+    private Node GoToTheEndOfElement(String element) {
         Node cur = root;
         for (int i = 0; i < element.length(); i++) {
             int position = charToInt(element.charAt(i));
-            //System.err.write(position);
+            if (cur.nextNode[position] == null) {
+                return null;
+            }
+            cur = cur.nextNode[position];
+        }
+        return cur;
+    }
+    
+    @Override
+    public boolean contains(String element) {
+        Node cur =  GoToTheEndOfElement(element);
+        if (cur == null) {
+            return false;
+        }
+
+        if (cur.isTerminal) {
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean add(String element) {
+        if (contains(element)) {
+            return false;
+        }
+
+        Node cur = root;
+        for (int i = 0; i < element.length(); i++) {
+            int position = charToInt(element.charAt(i));
             if (cur.nextNode[position] == null) {
                 cur.nextNode[position] = new Node();
             }
             cur = cur.nextNode[position];
         }
-        if (cur.isTerminal) {
-            return false;
-        }
+
         cur.isTerminal = true;
         cur = root;
         cur.numberOfTerminalWithThisPrefix++;
@@ -121,31 +147,12 @@ public class StringSetImpl implements StreamSerializable, StringSet {
     }
 
     @Override
-    public boolean contains(String element) {
-        Node cur = root;
-        for (int i = 0; i < element.length(); i++) {
-            int position = charToInt(element.charAt(i));
-            if (cur.nextNode[position] == null) {
-                return false;
-            }
-            cur = cur.nextNode[position];
-        }
-        if (cur.isTerminal) {
-            return true;
-        }
-        return false;
-    }
-
-    @Override
     public boolean remove(String element) {
-        Node cur = root;
-        for (int i = 0; i < element.length(); i++) {
-            int position = charToInt(element.charAt(i));
-            if (cur.nextNode[position] == null) {
-                return false;
-            }
-            cur = cur.nextNode[position];
+        Node cur =  GoToTheEndOfElement(element);
+        if (cur == null) {
+            return false;
         }
+
         if (cur.isTerminal == false) {
             return false;
         }
@@ -166,15 +173,10 @@ public class StringSetImpl implements StreamSerializable, StringSet {
 
     @Override
     public int howManyStartsWithPrefix(String prefix) {
-        Node cur = root;
-        for (int i = 0; i < prefix.length(); i++) {
-            int position = charToInt(prefix.charAt(i));
-            if (cur.nextNode[position] == null) {
-                return 0;
-            }
-            cur = cur.nextNode[position];
+        Node cur =  GoToTheEndOfElement(prefix);
+        if (cur == null) {
+            return 0;
         }
         return cur.numberOfTerminalWithThisPrefix;
     }
 }
-
