@@ -109,11 +109,7 @@ public class StringSetImpl implements StreamSerializable, StringSet {
     @Override
     public boolean contains(String element) {
         Node cur =  goToTheEndOfElement(element, 0);
-        if (cur == null) {
-            return false;
-        }
-
-        return cur.isTerminal;
+        return cur == null ? false : cur.isTerminal;
     }
 
     @Override
