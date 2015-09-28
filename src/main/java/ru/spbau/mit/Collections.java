@@ -8,9 +8,9 @@ import java.util.Collection;
  */
 
 public class Collections {
-    static public<T, R> Iterable<R> map(Function1<T, R> f, Iterable<T> src) {
+    static public <T, R> Iterable<R> map(Function1<T, R> f, Iterable<T> src) {
         ArrayList<R> dest = new ArrayList<R>();
-        for(T o: src) {
+        for (T o : src) {
             dest.add(f.apply(o));
         }
         return dest;
@@ -18,7 +18,7 @@ public class Collections {
 
     static public <T> Iterable<T> filter(Predicate<T> p, Iterable<T> src) {
         ArrayList<T> dest = new ArrayList<T>();
-        for (T o:src) {
+        for (T o : src) {
             if (p.apply(o)) {
                 dest.add(o);
             }
@@ -28,8 +28,8 @@ public class Collections {
 
     static public <T> Iterable<T> takeWhile(Predicate<T> p, Iterable<T> src) {
         ArrayList<T> dest = new ArrayList<T>();
-        for (T o:src) {
-            if(!p.apply(o)) {
+        for (T o : src) {
+            if (!p.apply(o)) {
                 break;
             }
             dest.add(o);
@@ -39,8 +39,8 @@ public class Collections {
 
     static public <T> Iterable<T> takeUnless(Predicate<T> p, Iterable<T> src) {
         ArrayList<T> dest = new ArrayList<T>();
-        for (T o:src) {
-            if(p.apply(o)) {
+        for (T o : src) {
+            if (p.apply(o)) {
                 break;
             }
             dest.add(o);
@@ -57,7 +57,7 @@ public class Collections {
     }
 
     static public <T, S> T foldl(Function2<? super T, ? super S, T> f, Collection<S> src, T start) {
-        for (S o: src) {
+        for (S o : src) {
             start = f.apply(start, o);
         }
         return start;

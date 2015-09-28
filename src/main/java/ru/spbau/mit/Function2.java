@@ -5,7 +5,7 @@ import java.util.Collections;
 /**
  * Created by olga on 27.09.15.
  */
-public abstract class Function2<T,S,R> {
+public abstract class Function2<T, S, R> {
     public abstract R apply(T x, S y);
 
     public <E> Function2<T, S, E> compose(final Function1<? super R, E> g) {
@@ -35,7 +35,7 @@ public abstract class Function2<T,S,R> {
         };
     }
 
-    public Function1<T, Function1<S, R> > curry() {
+    public Function1<T, Function1<S, R>> curry() {
         return new Function1<T, Function1<S, R>>() {
             @Override
             public Function1<S, R> apply(T x) {

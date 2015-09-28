@@ -1,6 +1,7 @@
 package ru.spbau.mit;
 
 import static org.junit.Assert.*;
+
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -20,7 +21,7 @@ public class FunctionTests {
         Function1<Integer, Integer> mul2 = new Function1<Integer, Integer>() {
             @Override
             public Integer apply(Integer x) {
-                return 2*x;
+                return 2 * x;
             }
         };
 
@@ -52,7 +53,7 @@ public class FunctionTests {
         Function2<Integer, Integer, Integer> div = new Function2<Integer, Integer, Integer>() {
             @Override
             public Integer apply(Integer x, Integer y) {
-                return x/y;
+                return x / y;
             }
         };
 
@@ -69,7 +70,7 @@ public class FunctionTests {
         Function2<Integer, Integer, Integer> div = new Function2<Integer, Integer, Integer>() {
             @Override
             public Integer apply(Integer x, Integer y) {
-                return x/y;
+                return x / y;
             }
         };
 
@@ -116,7 +117,7 @@ public class FunctionTests {
         Predicate<String> notUse = new Predicate<String>() {
             @Override
             public Boolean apply(String x) {
-                return (1/0 == 0);
+                return (1 / 0 == 0);
             }
         };
 
@@ -237,7 +238,7 @@ public class FunctionTests {
         Function2<Integer, Integer, Integer> a2b = new Function2<Integer, Integer, Integer>() {
             @Override
             public Integer apply(Integer x, Integer y) {
-                return 2*x + y;
+                return 2 * x + y;
             }
         };
 

@@ -5,7 +5,7 @@ import java.util.Objects;
 /**
  * Created by olga on 23.09.15.
  */
-public abstract class Function1<T,R> {
+public abstract class Function1<T, R> {
     public abstract R apply(T x);
 
     public <E> Function1<T, E> compose(final Function1<? super R, E> g) {
