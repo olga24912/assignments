@@ -33,14 +33,14 @@ public abstract class Predicate<T> extends Function1<T, Boolean> {
         };
     }
 
-    public static Predicate<?> ALWAYS_TRUE = new Predicate<Object>() {
+    public static final Predicate<?> ALWAYS_TRUE = new Predicate<Object>() {
         @Override
         public Boolean apply(Object x) {
             return true;
         }
     };
 
-    public static Predicate<?> ALWAYS_FALSE = new Predicate<Object>() {
+    public static final Predicate<?> ALWAYS_FALSE = new Predicate<Object>() {
         @Override
         public Boolean apply(Object x) {
             return false;
