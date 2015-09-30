@@ -8,7 +8,7 @@ import java.util.Collection;
  */
 
 public class Collections {
-    static public <T, R> Iterable<R> map(Function1<T, R> f, Iterable<T> src) {
+    static public <T, R> Iterable<R> map(Function1<? super T, R> f, Iterable<T> src) {
         ArrayList<R> dest = new ArrayList<R>();
         for (T o : src) {
             dest.add(f.apply(o));
@@ -16,7 +16,7 @@ public class Collections {
         return dest;
     }
 
-    static public <T> Iterable<T> filter(Predicate<T> p, Iterable<T> src) {
+    static public <T> Iterable<T> filter(Predicate<? super T> p, Iterable<T> src) {
         ArrayList<T> dest = new ArrayList<T>();
         for (T o : src) {
             if (p.apply(o)) {
@@ -26,7 +26,7 @@ public class Collections {
         return dest;
     }
 
-    static public <T> Iterable<T> takeWhile(Predicate<T> p, Iterable<T> src) {
+    static public <T> Iterable<T> takeWhile(Predicate<? super T> p, Iterable<T> src) {
         ArrayList<T> dest = new ArrayList<T>();
         for (T o : src) {
             if (!p.apply(o)) {
@@ -37,7 +37,7 @@ public class Collections {
         return dest;
     }
 
-    static public <T> Iterable<T> takeUnless(Predicate<T> p, Iterable<T> src) {
+    static public <T> Iterable<T> takeUnless(Predicate<? super T> p, Iterable<T> src) {
         ArrayList<T> dest = new ArrayList<T>();
         for (T o : src) {
             if (p.apply(o)) {
@@ -48,15 +48,19 @@ public class Collections {
         return dest;
     }
 
-    static public <T, S> S foldr(Function2<? super T, ? super S, S> f, Collection<T> src, S start) {
-        T[] cur = (T[]) src.toArray();
-        for (int i = cur.length - 1; i >= 0; --i) {
-            start = f.apply(cur[i], start);
+    static public <T, S> S foldr(Function2<? super T, ? super S, S> f, Iterable<T> src, S start) {
+        ArrayList<T> cur = new ArrayList<>();
+        for (T o : src) {
+            cur.add(o);
+        }
+
+        for (int i = cur.size() - 1; i >= 0; --i) {
+            start = f.apply(cur.get(i), start);
         }
         return start;
     }
 
-    static public <T, S> T foldl(Function2<? super T, ? super S, T> f, Collection<S> src, T start) {
+    static public <T, S> T foldl(Function2<? super T, ? super S, T> f, Iterable<S> src, T start) {
         for (S o : src) {
             start = f.apply(start, o);
         }
