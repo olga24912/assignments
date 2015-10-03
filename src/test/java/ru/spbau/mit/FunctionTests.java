@@ -78,13 +78,10 @@ public class FunctionTests {
         Function1<Integer, Integer> div128 = div.bind1(128);
 
         assertTrue(div.curry().apply(128).apply(2).equals(div128.apply(2)));
-
         assertTrue(div.curry().apply(128).apply(24).equals(div128.apply(24)));
     }
 
-
-
-    @Test
+   @Test
     public void testPredicateAnd() {
         Predicate<String> isPalindrome = getIsPalindrome();
 
@@ -99,7 +96,8 @@ public class FunctionTests {
         Predicate<String> notUse = new Predicate<String>() {
             @Override
             public Boolean apply(String x) {
-                throw new RuntimeException();
+                fail();
+                return false;
             }
         };
 
@@ -109,7 +107,6 @@ public class FunctionTests {
         assertTrue(isPalindrome.apply("a"));
 
         assertTrue(isAB.and(isPalindrome).apply("a"));
-
     }
 
     @Test
@@ -118,7 +115,8 @@ public class FunctionTests {
         Predicate<String> notUse = new Predicate<String>() {
             @Override
             public Boolean apply(String x) {
-                throw new RuntimeException();
+                fail();
+                return false;
             }
         };
 
@@ -133,37 +131,35 @@ public class FunctionTests {
     @Test
     public void testPredicateStaticFunctionNot() {
         assertTrue(Predicate.ALWAYS_FALSE.not().apply(null));
-
         assertFalse(Predicate.ALWAYS_TRUE.not().apply(null));
-
     }
 
     private Predicate<String> getIsAB() {
         return new Predicate<String>() {
-                @Override
-                public Boolean apply(String x) {
-                    for (int i = 0; i < x.length(); ++i) {
-                        if (x.charAt(i) != 'a' && x.charAt(i) != 'b') {
-                            return false;
-                        }
+            @Override
+            public Boolean apply(String x) {
+                for (int i = 0; i < x.length(); ++i) {
+                    if (x.charAt(i) != 'a' && x.charAt(i) != 'b') {
+                        return false;
                     }
-                    return true;
                 }
-            };
+                return true;
+            }
+        };
     }
 
     private Predicate<String> getIsPalindrome() {
         return new Predicate<String>() {
-                @Override
-                public Boolean apply(String x) {
-                    for (int i = 0, j = x.length() - 1; i < x.length(); i++, j--) {
-                        if (x.charAt(i) != x.charAt(j)) {
-                            return false;
-                        }
+            @Override
+            public Boolean apply(String x) {
+                for (int i = 0, j = x.length() - 1; i < x.length(); i++, j--) {
+                    if (x.charAt(i) != x.charAt(j)) {
+                        return false;
                     }
-                    return true;
                 }
-            };
+                return true;
+            }
+        };
     }
 
     @Test
