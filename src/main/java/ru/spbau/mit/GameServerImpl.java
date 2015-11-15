@@ -52,7 +52,7 @@ public class GameServerImpl implements GameServer {
                 try {
                     synchronized (connection) {
                         if (!connection.isClosed()) {
-                            String message = connection.receive(1000);
+                            String message = connection.receive(0);
 
                             if (message != null) {
                                 game.onPlayerSentMsg(id, message);

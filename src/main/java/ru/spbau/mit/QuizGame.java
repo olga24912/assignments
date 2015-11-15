@@ -72,7 +72,7 @@ public class QuizGame implements Game {
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
                 }
-                server.broadcast("New round started: "  + currentQ + " (" + currentA.length() + " letters)");
+                server.broadcast("New round started: " + currentQ + " (" + currentA.length() + " letters)");
                 Boolean newGame = false;
                 for (int i = 0; i < maxLettersToOpen; ++i) {
                     try {
