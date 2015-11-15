@@ -1,23 +1,136 @@
 package ru.spbau.mit;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
+
+import static java.lang.Thread.sleep;
 
 
 public class QuizGame implements Game {
+    private GameServer server;
+    private int maxLettersToOpen;
+    private long delayUntilNextLetter;
+    private String dictionaryFilename;
+    private Boolean gameContinue = false;
+    private Boolean wasStarted = false;
+
+    private ArrayList<String> questionAndAnswer;
+    private int currentQuestionNumber = 0;
+    Thread playThread;
+
     public QuizGame(GameServer server) {
-        throw new UnsupportedOperationException("TODO: implement");
+        this.server = server;
+        playThread = new Thread(new PlayGame());
+    }
+
+    public void setDelayUntilNextLetter (Integer delayUntilNextLetter) {
+        this.delayUntilNextLetter = delayUntilNextLetter;
+    }
+
+    public void setMaxLettersToOpen (Integer maxLettersToOpen) {
+        this.maxLettersToOpen = maxLettersToOpen;
+    }
+
+    public void setDictionaryFilename (String dictionaryFilename) {
+        this.dictionaryFilename = dictionaryFilename;
+    }
+
+    private String currentQ, currentA;
+
+    private void nextQuestion() throws FileNotFoundException {
+        if (questionAndAnswer == null) {
+            questionAndAnswer = new ArrayList<>();
+            currentQuestionNumber = 0;
+            Scanner scanner = new Scanner(new File(dictionaryFilename));
+            while(scanner.hasNext()) {
+                String s = scanner.nextLine();
+                questionAndAnswer.add(s);
+            }
+        }
+        if (currentQuestionNumber == questionAndAnswer.size()) {
+            currentQuestionNumber = 0;
+        }
+        currentQ = "";
+        currentA = "";
+        String currentQuestionAndAnswer = questionAndAnswer.get(currentQuestionNumber);
+        int i = 0;
+        while (i < currentQuestionAndAnswer.length() && !Objects.equals(currentQuestionAndAnswer.substring(i, i + 1), ";")) {
+            ++i;
+        }
+        currentQ = currentQuestionAndAnswer.substring(0, i);
+        currentA = currentQuestionAndAnswer.substring(i + 1);
+        currentQuestionNumber += 1;
+    }
+
+    class PlayGame implements Runnable {
+        @Override
+        public void run() {
+            while(gameContinue) {
+                try {
+                    nextQuestion();
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+                server.broadcast("New round started: "  + currentQ + " (" + currentA.length() + " letters)");
+                //System.err.println("New round...");
+                Boolean newGame = false;
+                for (int i = 0; i < maxLettersToOpen; ++i) {
+                    try {
+                        TimeUnit.MILLISECONDS.sleep(delayUntilNextLetter);
+                    } catch (InterruptedException e) {
+                        newGame = true;
+                        break;
+                    }
+                    if (Thread.interrupted()) {
+                        newGame = true;
+                        break;
+                    } else {
+                        server.broadcast("Current prefix is " + currentA.substring(0, i + 1));
+                        //System.err.println("Current prefix is" + currentA.substring(0, i + 1));
+                    }
+                }
+                if (newGame) {
+                    continue;
+                }
+                try {
+                    TimeUnit.MILLISECONDS.sleep(delayUntilNextLetter);
+                } catch (InterruptedException e) {
+                    continue;
+                }
+                if (!Thread.interrupted()) {
+                    server.broadcast("Nobody guessed, the word was " + currentA);
+                    //System.err.println("Nobody guessed, the word was " + currentA);
+                }
+            }
+        }
     }
 
     @Override
     public void onPlayerConnected(String id) {
-        throw new UnsupportedOperationException("TODO: implement");
     }
 
     @Override
     public void onPlayerSentMsg(String id, String msg) {
-        throw new UnsupportedOperationException("TODO: implement");
+        synchronized (this) {
+            //System.err.println(id + " " + msg + " " + currentA);
+            if (Objects.equals(msg, "!start")) {
+                gameContinue = true;
+                if (!wasStarted) {
+                    wasStarted = true;
+                    playThread.start();
+                }
+            } else if (Objects.equals(msg, "!stop")) {
+                gameContinue = false;
+                playThread.interrupt();
+                server.broadcast("Game has been stopped by " + id);
+            } else if (Objects.equals(msg, currentA)) {
+                server.broadcast("The winner is " + id);
+                //System.err.println("The winner is" + id);
+                playThread.interrupt();
+            } else {
+                server.sendTo(id, "Wrong try");
+            }
+        }
     }
 }
