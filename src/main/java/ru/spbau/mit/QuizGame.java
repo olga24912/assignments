@@ -73,7 +73,6 @@ public class QuizGame implements Game {
                     e.printStackTrace();
                 }
                 server.broadcast("New round started: "  + currentQ + " (" + currentA.length() + " letters)");
-                //System.err.println("New round...");
                 Boolean newGame = false;
                 for (int i = 0; i < maxLettersToOpen; ++i) {
                     try {
@@ -87,7 +86,6 @@ public class QuizGame implements Game {
                         break;
                     } else {
                         server.broadcast("Current prefix is " + currentA.substring(0, i + 1));
-                        //System.err.println("Current prefix is" + currentA.substring(0, i + 1));
                     }
                 }
                 if (newGame) {
@@ -100,7 +98,6 @@ public class QuizGame implements Game {
                 }
                 if (!Thread.interrupted()) {
                     server.broadcast("Nobody guessed, the word was " + currentA);
-                    //System.err.println("Nobody guessed, the word was " + currentA);
                 }
             }
         }
@@ -113,7 +110,6 @@ public class QuizGame implements Game {
     @Override
     public void onPlayerSentMsg(String id, String msg) {
         synchronized (this) {
-            //System.err.println(id + " " + msg + " " + currentA);
             if (Objects.equals(msg, "!start")) {
                 gameContinue = true;
                 if (!wasStarted) {
@@ -126,7 +122,6 @@ public class QuizGame implements Game {
                 server.broadcast("Game has been stopped by " + id);
             } else if (Objects.equals(msg, currentA)) {
                 server.broadcast("The winner is " + id);
-                //System.err.println("The winner is" + id);
                 playThread.interrupt();
             } else {
                 server.sendTo(id, "Wrong try");
