@@ -24,11 +24,11 @@ public class QuizGame implements Game {
         playThread = new Thread(new PlayGame());
     }
 
-    public void setDelayUntilNextLetter (Integer delayUntilNextLetter) {
+    public void setDelayUntilNextLetter (int delayUntilNextLetter) {
         this.delayUntilNextLetter = delayUntilNextLetter;
     }
 
-    public void setMaxLettersToOpen (Integer maxLettersToOpen) {
+    public void setMaxLettersToOpen (int maxLettersToOpen) {
         this.maxLettersToOpen = maxLettersToOpen;
     }
 
