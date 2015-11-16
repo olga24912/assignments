@@ -82,10 +82,8 @@ public class GameServerImpl implements GameServer {
 
     @Override
     public void broadcast(String message) {
-        synchronized (listOfConnection) {
-            for (Connection connection : listOfConnection.values()) {
+        for (Connection connection : listOfConnection.values()) {
                 connection.send(message);
-            }
         }
     }
 
