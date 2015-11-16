@@ -66,38 +66,46 @@ public class QuizGame implements Game {
     class PlayGame implements Runnable {
         @Override
         public void run() {
-            while(gameContinue) {
-                try {
-                    nextQuestion();
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                }
-                server.broadcast("New round started: " + currentQ + " (" + currentA.length() + " letters)");
-                Boolean newGame = false;
-                for (int i = 0; i < maxLettersToOpen; ++i) {
+            while(true) {
+                if (gameContinue) {
                     try {
-                        TimeUnit.MILLISECONDS.sleep(delayUntilNextLetter);
-                    } catch (InterruptedException e) {
-                        newGame = true;
-                        break;
+                        nextQuestion();
+                    } catch (FileNotFoundException e) {
+                        e.printStackTrace();
+                    }
+                    server.broadcast("New round started: " + currentQ + " (" + currentA.length() + " letters)");
+                    Boolean newGame = false;
+                    for (int i = 0; i < maxLettersToOpen; ++i) {
+                        try {
+                            TimeUnit.MILLISECONDS.sleep(delayUntilNextLetter);
+                        } catch (InterruptedException e) {
+                            newGame = true;
+                            break;
+                        }
+                        if (Thread.interrupted()) {
+                            newGame = true;
+                            break;
+                        } else {
+                            server.broadcast("Current prefix is " + currentA.substring(0, i + 1));
+                        }
+                    }
+                    if (newGame) {
+                        continue;
                     }
                     if (Thread.interrupted()) {
                         newGame = true;
-                        break;
+                        continue;
                     } else {
-                        server.broadcast("Current prefix is " + currentA.substring(0, i + 1));
+                        try {
+                            TimeUnit.MILLISECONDS.sleep(delayUntilNextLetter);
+                        } catch (InterruptedException e) {
+                            Thread.interrupted();
+                            continue;
+                        }
                     }
-                }
-                if (newGame) {
-                    continue;
-                }
-                try {
-                    TimeUnit.MILLISECONDS.sleep(delayUntilNextLetter);
-                } catch (InterruptedException e) {
-                    continue;
-                }
-                if (!Thread.interrupted()) {
-                    server.broadcast("Nobody guessed, the word was " + currentA);
+                    if (!Thread.interrupted()) {
+                        server.broadcast("Nobody guessed, the word was " + currentA);
+                    }
                 }
             }
         }
