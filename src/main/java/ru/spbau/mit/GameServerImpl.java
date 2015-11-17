@@ -6,7 +6,7 @@ import java.util.*;
 
 
 public class GameServerImpl implements GameServer {
-    private Game game;
+    Game game;
 
     public GameServerImpl(String gameClassName, Properties properties) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
         Class<?> pluginClass = Class.forName(gameClassName);
@@ -17,7 +17,7 @@ public class GameServerImpl implements GameServer {
             String setName = "set" + key.substring(0, 1).toUpperCase() + key.substring(1);
             try {
                 int val = Integer.parseInt(value);
-                Method setter = pluginClass.getMethod(setName, Integer.TYPE);
+                Method setter = pluginClass.getMethod(setName, Integer.class);
                 setter.invoke(plugin, val);
             } catch (NumberFormatException e) {
                 Method setter = pluginClass.getMethod(setName, String.class);
@@ -28,11 +28,13 @@ public class GameServerImpl implements GameServer {
             throw new IllegalArgumentException();
         }
         game = (Game) plugin;
+
+        listOfConnection = new HashMap<>();
     }
 
     private int countOfConnection = 0;
 
-    private final Map<String, Connection> listOfConnection = new HashMap<>();
+    private final Map<String, Connection> listOfConnection;
 
     private class GameServerRunnable implements Runnable {
         final Connection connection;
