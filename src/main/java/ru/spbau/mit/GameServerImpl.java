@@ -3,13 +3,10 @@ package ru.spbau.mit;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 
 public class GameServerImpl implements GameServer {
     private Game game;
-    private final ReadWriteLock listOfConnectionLock = new ReentrantReadWriteLock();
 
     public GameServerImpl(String gameClassName, Properties properties) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
         Class<?> pluginClass = Class.forName(gameClassName);
@@ -31,11 +28,13 @@ public class GameServerImpl implements GameServer {
             throw new IllegalArgumentException();
         }
         game = (Game) plugin;
+
+        listOfConnection = new HashMap<>();
     }
 
     private int countOfConnection = 0;
 
-    private final Map<String, Connection> listOfConnection = new HashMap<>();
+    private final Map<String, Connection> listOfConnection;
 
     private class GameServerRunnable implements Runnable {
         final Connection connection;
@@ -64,20 +63,18 @@ public class GameServerImpl implements GameServer {
                     break;
                 }
             }
-            listOfConnectionLock.writeLock().lock();
-            listOfConnection.remove(id);
-            listOfConnectionLock.writeLock().unlock();
+            synchronized (listOfConnection) {
+                listOfConnection.remove(id);
+            }
         }
     }
 
     @Override
     public void accept(final Connection connection) {
         String id = "" + countOfConnection++;
-
-        listOfConnectionLock.writeLock().lock();
-        listOfConnection.put(id, connection);
-        listOfConnectionLock.writeLock().unlock();
-
+        synchronized (listOfConnection) {
+            listOfConnection.put(id, connection);
+        }
         connection.send(id);
 
         new Thread(new GameServerRunnable(connection, id)).start();
@@ -85,11 +82,11 @@ public class GameServerImpl implements GameServer {
 
     @Override
     public void broadcast(String message) {
-        listOfConnectionLock.readLock().lock();
-        for (Connection connection : listOfConnection.values()) {
-            connection.send(message);
+        synchronized (listOfConnection) {
+            for (Connection connection : listOfConnection.values()) {
+                connection.send(message);
+            }
         }
-        listOfConnectionLock.readLock().unlock();
     }
 
     @Override
