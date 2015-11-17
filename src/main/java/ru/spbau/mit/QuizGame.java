@@ -4,11 +4,9 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-import static java.lang.Thread.sleep;
-
 
 public class QuizGame implements Game {
-    private GameServer server;
+    private final GameServer server;
     private int maxLettersToOpen;
     private long delayUntilNextLetter;
     private String dictionaryFilename;
@@ -17,22 +15,22 @@ public class QuizGame implements Game {
 
     private ArrayList<String> questionAndAnswer;
     private int currentQuestionNumber = 0;
-    Thread playThread;
+    private final Thread playThread;
 
     public QuizGame(GameServer server) {
         this.server = server;
         playThread = new Thread(new PlayGame());
     }
 
-    public void setDelayUntilNextLetter (int delayUntilNextLetter) {
+    public void setDelayUntilNextLetter(int delayUntilNextLetter) {
         this.delayUntilNextLetter = delayUntilNextLetter;
     }
 
-    public void setMaxLettersToOpen (int maxLettersToOpen) {
+    public void setMaxLettersToOpen(int maxLettersToOpen) {
         this.maxLettersToOpen = maxLettersToOpen;
     }
 
-    public void setDictionaryFilename (String dictionaryFilename) {
+    public void setDictionaryFilename(String dictionaryFilename) {
         this.dictionaryFilename = dictionaryFilename;
     }
 
@@ -43,7 +41,7 @@ public class QuizGame implements Game {
             questionAndAnswer = new ArrayList<>();
             currentQuestionNumber = 0;
             Scanner scanner = new Scanner(new File(dictionaryFilename));
-            while(scanner.hasNext()) {
+            while (scanner.hasNext()) {
                 String s = scanner.nextLine();
                 questionAndAnswer.add(s);
             }
@@ -63,10 +61,11 @@ public class QuizGame implements Game {
         currentQuestionNumber += 1;
     }
 
-    class PlayGame implements Runnable {
+    private class PlayGame implements Runnable {
         @Override
         public void run() {
-            mainLoop: while(true) {
+            mainLoop:
+            while (true) {
                 if (gameContinue) {
                     try {
                         nextQuestion();

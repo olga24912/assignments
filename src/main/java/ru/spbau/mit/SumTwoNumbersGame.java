@@ -4,9 +4,10 @@ import java.util.*;
 
 public class SumTwoNumbersGame implements Game {
     private int number1, number2;
-    private Random rnd = new Random();
+    private final Random rnd = new Random();
     private final int seed = 179;
-    private GameServer server;
+    private final GameServer server;
+
     public SumTwoNumbersGame(GameServer server) {
         rnd.setSeed(seed);
         number1 = Math.abs(rnd.nextInt()) + 1;

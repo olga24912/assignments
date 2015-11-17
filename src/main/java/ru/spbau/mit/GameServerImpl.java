@@ -8,8 +8,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 
 public class GameServerImpl implements GameServer {
-    Game game;
-    ReadWriteLock listOfConnectionLock = new ReentrantReadWriteLock();
+    private Game game;
+    private final ReadWriteLock listOfConnectionLock = new ReentrantReadWriteLock();
 
     public GameServerImpl(String gameClassName, Properties properties) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
         Class<?> pluginClass = Class.forName(gameClassName);
