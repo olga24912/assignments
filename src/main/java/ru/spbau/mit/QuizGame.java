@@ -66,7 +66,7 @@ public class QuizGame implements Game {
     class PlayGame implements Runnable {
         @Override
         public void run() {
-            while(true) {
+            mainLoop: while(true) {
                 if (gameContinue) {
                     try {
                         nextQuestion();
@@ -74,26 +74,20 @@ public class QuizGame implements Game {
                         e.printStackTrace();
                     }
                     server.broadcast("New round started: " + currentQ + " (" + currentA.length() + " letters)");
-                    Boolean newGame = false;
                     for (int i = 0; i < maxLettersToOpen; ++i) {
                         try {
                             TimeUnit.MILLISECONDS.sleep(delayUntilNextLetter);
                         } catch (InterruptedException e) {
-                            newGame = true;
-                            break;
+                            Thread.interrupted();
+                            continue mainLoop;
                         }
                         if (Thread.interrupted()) {
-                            newGame = true;
-                            break;
+                            continue mainLoop;
                         } else {
                             server.broadcast("Current prefix is " + currentA.substring(0, i + 1));
                         }
                     }
-                    if (newGame) {
-                        continue;
-                    }
                     if (Thread.interrupted()) {
-                        newGame = true;
                         continue;
                     } else {
                         try {

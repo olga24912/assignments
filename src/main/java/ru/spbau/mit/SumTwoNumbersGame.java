@@ -2,9 +2,6 @@ package ru.spbau.mit;
 
 import java.util.*;
 
-import static java.lang.Math.abs;
-
-
 public class SumTwoNumbersGame implements Game {
     private int number1, number2;
     private Random rnd = new Random();
@@ -12,8 +9,8 @@ public class SumTwoNumbersGame implements Game {
     private GameServer server;
     public SumTwoNumbersGame(GameServer server) {
         rnd.setSeed(seed);
-        number1 = abs(rnd.nextInt());
-        number2 = abs(rnd.nextInt());
+        number1 = Math.abs(rnd.nextInt()) + 1;
+        number2 = Math.abs(rnd.nextInt()) + 1;
         this.server = server;
     }
 
@@ -31,8 +28,8 @@ public class SumTwoNumbersGame implements Game {
             if (sum == number1 + number2) {
                 server.sendTo(id, "Right");
                 server.broadcast(id + " won");
-                number1 = abs(rnd.nextInt());
-                number2 = abs(rnd.nextInt());
+                number1 = Math.abs(rnd.nextInt()) + 1;
+                number2 = Math.abs(rnd.nextInt()) + 1;
                 server.broadcast("" + number1 + " " + number2);
             } else {
                 server.sendTo(id, "Wrong");
