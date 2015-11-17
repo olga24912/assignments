@@ -17,7 +17,7 @@ public class GameServerImpl implements GameServer {
             String setName = "set" + key.substring(0, 1).toUpperCase() + key.substring(1);
             try {
                 int val = Integer.parseInt(value);
-                Method setter = pluginClass.getMethod(setName, Integer.class);
+                Method setter = pluginClass.getMethod(setName, Integer.TYPE);
                 setter.invoke(plugin, val);
             } catch (NumberFormatException e) {
                 Method setter = pluginClass.getMethod(setName, String.class);
