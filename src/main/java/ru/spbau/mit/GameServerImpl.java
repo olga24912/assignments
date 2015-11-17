@@ -94,8 +94,8 @@ public class GameServerImpl implements GameServer {
 
     @Override
     public void sendTo(String id, String message) {
-        listOfConnectionLock.readLock().lock();
-        listOfConnection.get(id).send(message);
-        listOfConnectionLock.readLock().unlock();
+        synchronized (listOfConnection) {
+            listOfConnection.get(id).send(message);
+        }
     }
 }
