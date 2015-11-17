@@ -80,9 +80,7 @@ public class GameServerImpl implements GameServer {
 
         connection.send(id);
 
-        Thread gameServerTread = new Thread(new GameServerRunnable(connection, id));
-
-        gameServerTread.start();
+        new Thread(new GameServerRunnable(connection, id)).start();
     }
 
     @Override
