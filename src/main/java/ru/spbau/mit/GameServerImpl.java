@@ -15,14 +15,10 @@ public class GameServerImpl implements GameServer {
         for (String key : properties.stringPropertyNames()) {
             String value = properties.getProperty(key);
             String setName = "set" + key.substring(0, 1).toUpperCase() + key.substring(1);
-            try {
-                int val = Integer.parseInt(value);
-                Method setter = pluginClass.getMethod(setName, Integer.TYPE);
-                setter.invoke(plugin, val);
-            } catch (NumberFormatException e) {
-                Method setter = pluginClass.getMethod(setName, String.class);
-                setter.invoke(plugin, value);
-            }
+            Integer val = parseInteger(value);
+
+            Method setter = pluginClass.getMethod(setName, val != null ? Integer.TYPE : String.class);
+            setter.invoke(plugin, val != null ? val : value);
         }
         if (!(plugin instanceof Game)) {
             throw new IllegalArgumentException();
@@ -30,6 +26,14 @@ public class GameServerImpl implements GameServer {
         game = (Game) plugin;
 
         listOfConnection = new HashMap<>();
+    }
+
+    private static Integer parseInteger(String s) {
+        try {
+            return Integer.parseInt(s);
+        } catch (NumberFormatException ignored) {
+            return null;
+        }
     }
 
     private int countOfConnection = 0;
