@@ -3,6 +3,8 @@ package ru.spbau.mit;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 
 public class QuizGame implements Game {
@@ -10,16 +12,17 @@ public class QuizGame implements Game {
     private int maxLettersToOpen;
     private long delayUntilNextLetter;
     private String dictionaryFilename;
-    private Boolean gameContinue = false;
-    private Boolean wasStarted = false;
 
     private ArrayList<String> questionAndAnswer;
     private int currentQuestionNumber = 0;
-    private final Thread playThread;
+
+    private volatile int lastIdOfWaiting = 0;
+    private int countOpenLatter = 0;
+
+    private Lock lock = new ReentrantLock();
 
     public QuizGame(GameServer server) {
         this.server = server;
-        playThread = new Thread(new PlayGame());
     }
 
     public void setDelayUntilNextLetter(int delayUntilNextLetter) {
@@ -61,46 +64,48 @@ public class QuizGame implements Game {
         currentQuestionNumber += 1;
     }
 
+    Random rand = new Random();
+
+    private void nextTread() {
+        synchronized (rand) {
+            lastIdOfWaiting = rand.nextInt();
+            Thread tr = new Thread(new PlayGame(lastIdOfWaiting));
+            tr.start();
+        }
+    }
+
     private class PlayGame implements Runnable {
+        private int idOfThisTread;
+
+        PlayGame(int idOfThisTread) {
+            this.idOfThisTread = idOfThisTread;
+        }
+
         @Override
         public void run() {
-            mainLoop:
-            while (true) {
-                if (gameContinue) {
+            try {
+                TimeUnit.MILLISECONDS.sleep(delayUntilNextLetter);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            lock.lock();
+            if (idOfThisTread == lastIdOfWaiting) {
+                if (maxLettersToOpen == countOpenLatter) {
+                    server.broadcast("Nobody guessed, the word was " + currentA);
                     try {
                         nextQuestion();
                     } catch (FileNotFoundException e) {
                         e.printStackTrace();
                     }
                     server.broadcast("New round started: " + currentQ + " (" + currentA.length() + " letters)");
-                    for (int i = 0; i < maxLettersToOpen; i++) {
-                        try {
-                            TimeUnit.MILLISECONDS.sleep(delayUntilNextLetter);
-                        } catch (InterruptedException e) {
-                            Thread.interrupted();
-                            continue mainLoop;
-                        }
-                        if (Thread.interrupted()) {
-                            continue mainLoop;
-                        } else {
-                            server.broadcast("Current prefix is " + currentA.substring(0, i + 1));
-                        }
-                    }
-                    if (Thread.interrupted()) {
-                        continue;
-                    } else {
-                        try {
-                            TimeUnit.MILLISECONDS.sleep(delayUntilNextLetter);
-                        } catch (InterruptedException e) {
-                            Thread.interrupted();
-                            continue;
-                        }
-                    }
-                    if (!Thread.interrupted()) {
-                        server.broadcast("Nobody guessed, the word was " + currentA);
-                    }
+                    nextTread();
+                } else {
+                    server.broadcast("Current prefix is " + currentA.substring(0, countOpenLatter + 1));
+                    countOpenLatter++;
+                    nextTread();
                 }
             }
+            lock.unlock();
         }
     }
 
@@ -110,23 +115,30 @@ public class QuizGame implements Game {
 
     @Override
     public void onPlayerSentMsg(String id, String msg) {
-        synchronized (this) {
-            if (Objects.equals(msg, "!start")) {
-                gameContinue = true;
-                if (!wasStarted) {
-                    wasStarted = true;
-                    playThread.start();
-                }
-            } else if (Objects.equals(msg, "!stop")) {
-                gameContinue = false;
-                playThread.interrupt();
-                server.broadcast("Game has been stopped by " + id);
-            } else if (Objects.equals(msg, currentA)) {
-                server.broadcast("The winner is " + id);
-                playThread.interrupt();
-            } else {
-                server.sendTo(id, "Wrong try");
+        lock.lock();
+        if (Objects.equals(msg, "!start")) {
+            try {
+                nextQuestion();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
             }
+            server.broadcast("New round started: " + currentQ + " (" + currentA.length() + " letters)");
+            nextTread();
+        } else if (Objects.equals(msg, "!stop")) {
+            lastIdOfWaiting = 0;
+            server.broadcast("Game has been stopped by " + id);
+        } else if (Objects.equals(msg, currentA)) {
+            server.broadcast("The winner is " + id);
+            try {
+                nextQuestion();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+            server.broadcast("New round started: " + currentQ + " (" + currentA.length() + " letters)");
+            nextTread();
+        } else {
+            server.sendTo(id, "Wrong try");
         }
+        lock.unlock();
     }
 }

@@ -2,8 +2,7 @@ package ru.spbau.mit;
 
 
 public class HelloWorldServer implements Server {
-
-    private class SendHelloWorld implements Runnable {
+    private static class SendHelloWorld implements Runnable {
         public SendHelloWorld(Connection connection) {
             this.connection = connection;
         }

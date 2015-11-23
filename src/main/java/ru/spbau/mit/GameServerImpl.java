@@ -1,5 +1,6 @@
 package ru.spbau.mit;
 
+import java.io.FileNotFoundException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -24,8 +25,6 @@ public class GameServerImpl implements GameServer {
             throw new IllegalArgumentException();
         }
         game = (Game) plugin;
-
-        listOfConnection = new HashMap<>();
     }
 
     private static Integer parseInteger(String s) {
@@ -38,7 +37,7 @@ public class GameServerImpl implements GameServer {
 
     private int countOfConnection = 0;
 
-    private final Map<String, Connection> listOfConnection;
+    private final Map<String, Connection> listOfConnection = new HashMap<>();
 
     private class GameServerRunnable implements Runnable {
         final Connection connection;
@@ -54,17 +53,15 @@ public class GameServerImpl implements GameServer {
             game.onPlayerConnected(id);
             while (!connection.isClosed()) {
                 try {
-                    synchronized (connection) {
-                        if (!connection.isClosed()) {
-                            String message = connection.receive(0);
-
-                            if (message != null) {
-                                game.onPlayerSentMsg(id, message);
-                            }
+                    if (!connection.isClosed()) {
+                        String message = connection.receive(100);
+                        if (message != null) {
+                            game.onPlayerSentMsg(id, message);
                         }
                     }
                 } catch (InterruptedException ignored) {
                     break;
+
                 }
             }
             synchronized (listOfConnection) {
