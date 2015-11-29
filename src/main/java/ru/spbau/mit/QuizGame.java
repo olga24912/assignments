@@ -116,29 +116,32 @@ public class QuizGame implements Game {
     @Override
     public void onPlayerSentMsg(String id, String msg) {
         lock.lock();
-        if (Objects.equals(msg, "!start")) {
-            try {
-                nextQuestion();
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
+        try {
+            if ("!start".equals(msg)) {
+                try {
+                    nextQuestion();
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+                server.broadcast("New round started: " + currentQ + " (" + currentA.length() + " letters)");
+                nextTread();
+            } else if ("!stop".equals(msg)) {
+                lastIdOfWaiting = 0;
+                server.broadcast("Game has been stopped by " + id);
+            } else if (currentA.equals(msg)) {
+                server.broadcast("The winner is " + id);
+                try {
+                    nextQuestion();
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+                server.broadcast("New round started: " + currentQ + " (" + currentA.length() + " letters)");
+                nextTread();
+            } else {
+                server.sendTo(id, "Wrong try");
             }
-            server.broadcast("New round started: " + currentQ + " (" + currentA.length() + " letters)");
-            nextTread();
-        } else if (Objects.equals(msg, "!stop")) {
-            lastIdOfWaiting = 0;
-            server.broadcast("Game has been stopped by " + id);
-        } else if (Objects.equals(msg, currentA)) {
-            server.broadcast("The winner is " + id);
-            try {
-                nextQuestion();
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            }
-            server.broadcast("New round started: " + currentQ + " (" + currentA.length() + " letters)");
-            nextTread();
-        } else {
-            server.sendTo(id, "Wrong try");
+        } finally {
+            lock.unlock();
         }
-        lock.unlock();
     }
 }
