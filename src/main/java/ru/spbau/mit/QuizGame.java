@@ -21,6 +21,8 @@ public class QuizGame implements Game {
 
     private Lock lock = new ReentrantLock();
 
+    private String currentQuestion, currentAnswer;
+
     public QuizGame(GameServer server) {
         this.server = server;
     }
@@ -45,29 +47,27 @@ public class QuizGame implements Game {
         }
     }
 
-    private String currentQ, currentA;
-
     private void nextQuestion() {
         if (currentQuestionNumber == questionAndAnswer.size()) {
             currentQuestionNumber = 0;
         }
-        currentQ = "";
-        currentA = "";
+        currentQuestion = "";
+        currentAnswer = "";
         String currentQuestionAndAnswer = questionAndAnswer.get(currentQuestionNumber);
         int i = 0;
         while (i < currentQuestionAndAnswer.length() && !Objects.equals(currentQuestionAndAnswer.substring(i, i + 1), ";")) {
             ++i;
         }
-        currentQ = currentQuestionAndAnswer.substring(0, i);
-        currentA = currentQuestionAndAnswer.substring(i + 1);
+        currentQuestion = currentQuestionAndAnswer.substring(0, i);
+        currentAnswer = currentQuestionAndAnswer.substring(i + 1);
         currentQuestionNumber += 1;
     }
 
-    Random rand = new Random();
+    private volatile Integer countOfTread = 0;
 
     private void nextTread() {
-        synchronized (rand) {
-            lastIdOfWaiting = rand.nextInt();
+        synchronized (countOfTread) {
+            lastIdOfWaiting = countOfTread++;
             Thread tr = new Thread(new PlayGame(lastIdOfWaiting));
             tr.start();
         }
@@ -84,23 +84,25 @@ public class QuizGame implements Game {
         public void run() {
             try {
                 TimeUnit.MILLISECONDS.sleep(delayUntilNextLetter);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+            } catch (InterruptedException ignored) {
             }
             lock.lock();
-            if (idOfThisTread == lastIdOfWaiting) {
-                if (maxLettersToOpen == countOpenLatter) {
-                    server.broadcast("Nobody guessed, the word was " + currentA);
-                    nextQuestion();
-                    server.broadcast("New round started: " + currentQ + " (" + currentA.length() + " letters)");
-                    nextTread();
-                } else {
-                    server.broadcast("Current prefix is " + currentA.substring(0, countOpenLatter + 1));
-                    countOpenLatter++;
-                    nextTread();
+            try {
+                if (idOfThisTread == lastIdOfWaiting) {
+                    if (maxLettersToOpen == countOpenLatter) {
+                        server.broadcast("Nobody guessed, the word was " + currentAnswer);
+                        nextQuestion();
+                        server.broadcast("New round started: " + currentQuestion + " (" + currentAnswer.length() + " letters)");
+                        nextTread();
+                    } else {
+                        server.broadcast("Current prefix is " + currentAnswer.substring(0, countOpenLatter + 1));
+                        countOpenLatter++;
+                        nextTread();
+                    }
                 }
+            } finally {
+                lock.unlock();
             }
-            lock.unlock();
         }
     }
 
@@ -114,15 +116,15 @@ public class QuizGame implements Game {
         try {
             if ("!start".equals(msg)) {
                 nextQuestion();
-                server.broadcast("New round started: " + currentQ + " (" + currentA.length() + " letters)");
+                server.broadcast("New round started: " + currentQuestion + " (" + currentAnswer.length() + " letters)");
                 nextTread();
             } else if ("!stop".equals(msg)) {
                 lastIdOfWaiting = 0;
                 server.broadcast("Game has been stopped by " + id);
-            } else if (currentA.equals(msg)) {
+            } else if (currentAnswer.equals(msg)) {
                 server.broadcast("The winner is " + id);
                 nextQuestion();
-                server.broadcast("New round started: " + currentQ + " (" + currentA.length() + " letters)");
+                server.broadcast("New round started: " + currentQuestion + " (" + currentAnswer.length() + " letters)");
                 nextTread();
             } else {
                 server.sendTo(id, "Wrong try");
