@@ -33,22 +33,21 @@ public class QuizGame implements Game {
         this.maxLettersToOpen = maxLettersToOpen;
     }
 
-    public void setDictionaryFilename(String dictionaryFilename) {
+    public void setDictionaryFilename(String dictionaryFilename) throws FileNotFoundException {
         this.dictionaryFilename = dictionaryFilename;
+        questionAndAnswer = new ArrayList<>();
+        currentQuestionNumber = 0;
+        Scanner scanner = null;
+        scanner = new Scanner(new File(dictionaryFilename));
+        while (scanner.hasNext()) {
+            String s = scanner.nextLine();
+            questionAndAnswer.add(s);
+        }
     }
 
     private String currentQ, currentA;
 
-    private void nextQuestion() throws FileNotFoundException {
-        if (questionAndAnswer == null) {
-            questionAndAnswer = new ArrayList<>();
-            currentQuestionNumber = 0;
-            Scanner scanner = new Scanner(new File(dictionaryFilename));
-            while (scanner.hasNext()) {
-                String s = scanner.nextLine();
-                questionAndAnswer.add(s);
-            }
-        }
+    private void nextQuestion() {
         if (currentQuestionNumber == questionAndAnswer.size()) {
             currentQuestionNumber = 0;
         }
@@ -92,11 +91,7 @@ public class QuizGame implements Game {
             if (idOfThisTread == lastIdOfWaiting) {
                 if (maxLettersToOpen == countOpenLatter) {
                     server.broadcast("Nobody guessed, the word was " + currentA);
-                    try {
-                        nextQuestion();
-                    } catch (FileNotFoundException e) {
-                        e.printStackTrace();
-                    }
+                    nextQuestion();
                     server.broadcast("New round started: " + currentQ + " (" + currentA.length() + " letters)");
                     nextTread();
                 } else {
@@ -118,11 +113,7 @@ public class QuizGame implements Game {
         lock.lock();
         try {
             if ("!start".equals(msg)) {
-                try {
-                    nextQuestion();
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                }
+                nextQuestion();
                 server.broadcast("New round started: " + currentQ + " (" + currentA.length() + " letters)");
                 nextTread();
             } else if ("!stop".equals(msg)) {
@@ -130,11 +121,7 @@ public class QuizGame implements Game {
                 server.broadcast("Game has been stopped by " + id);
             } else if (currentA.equals(msg)) {
                 server.broadcast("The winner is " + id);
-                try {
-                    nextQuestion();
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                }
+                nextQuestion();
                 server.broadcast("New round started: " + currentQ + " (" + currentA.length() + " letters)");
                 nextTread();
             } else {
