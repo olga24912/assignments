@@ -52,15 +52,12 @@ public class GameServerImpl implements GameServer {
             game.onPlayerConnected(id);
             while (!connection.isClosed()) {
                 try {
-                    if (!connection.isClosed()) {
-                        String message = connection.receive(100);
-                        if (message != null) {
-                            game.onPlayerSentMsg(id, message);
-                        }
+                    String message = connection.receive(100);
+                    if (message != null) {
+                        game.onPlayerSentMsg(id, message);
                     }
                 } catch (InterruptedException ignored) {
                     break;
-
                 }
             }
             synchronized (listOfConnection) {

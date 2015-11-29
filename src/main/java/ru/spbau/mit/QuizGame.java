@@ -55,7 +55,7 @@ public class QuizGame implements Game {
         currentAnswer = "";
         String currentQuestionAndAnswer = questionAndAnswer.get(currentQuestionNumber);
         int i = 0;
-        while (i < currentQuestionAndAnswer.length() && !Objects.equals(currentQuestionAndAnswer.substring(i, i + 1), ";")) {
+        while (i < currentQuestionAndAnswer.length() && !currentQuestionAndAnswer.substring(i, i + 1).equals(";")) {
             ++i;
         }
         currentQuestion = currentQuestionAndAnswer.substring(0, i);
@@ -91,9 +91,7 @@ public class QuizGame implements Game {
                 if (idOfThisTread == lastIdOfWaiting) {
                     if (maxLettersToOpen == countOpenLatter) {
                         server.broadcast("Nobody guessed, the word was " + currentAnswer);
-                        nextQuestion();
-                        server.broadcast("New round started: " + currentQuestion + " (" + currentAnswer.length() + " letters)");
-                        nextTread();
+                        newRoundSendMsg();
                     } else {
                         server.broadcast("Current prefix is " + currentAnswer.substring(0, countOpenLatter + 1));
                         countOpenLatter++;
@@ -115,22 +113,24 @@ public class QuizGame implements Game {
         lock.lock();
         try {
             if ("!start".equals(msg)) {
-                nextQuestion();
-                server.broadcast("New round started: " + currentQuestion + " (" + currentAnswer.length() + " letters)");
-                nextTread();
+                newRoundSendMsg();
             } else if ("!stop".equals(msg)) {
-                lastIdOfWaiting = 0;
+                lastIdOfWaiting = -1;
                 server.broadcast("Game has been stopped by " + id);
             } else if (currentAnswer.equals(msg)) {
                 server.broadcast("The winner is " + id);
-                nextQuestion();
-                server.broadcast("New round started: " + currentQuestion + " (" + currentAnswer.length() + " letters)");
-                nextTread();
+                newRoundSendMsg();
             } else {
                 server.sendTo(id, "Wrong try");
             }
         } finally {
             lock.unlock();
         }
+    }
+
+    private void newRoundSendMsg() {
+        nextQuestion();
+        server.broadcast("New round started: " + currentQuestion + " (" + currentAnswer.length() + " letters)");
+        nextTread();
     }
 }
