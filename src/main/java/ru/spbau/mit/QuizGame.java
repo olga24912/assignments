@@ -53,13 +53,9 @@ public class QuizGame implements Game {
         }
         currentQuestion = "";
         currentAnswer = "";
-        String currentQuestionAndAnswer = questionAndAnswer.get(currentQuestionNumber);
-        int i = 0;
-        while (i < currentQuestionAndAnswer.length() && !currentQuestionAndAnswer.substring(i, i + 1).equals(";")) {
-            ++i;
-        }
-        currentQuestion = currentQuestionAndAnswer.substring(0, i);
-        currentAnswer = currentQuestionAndAnswer.substring(i + 1);
+        String[] currentQuestionAndAnswer = questionAndAnswer.get(currentQuestionNumber).split(";");
+        currentQuestion = currentQuestionAndAnswer[0];
+        currentAnswer = currentQuestionAndAnswer[1];
         currentQuestionNumber += 1;
     }
 
