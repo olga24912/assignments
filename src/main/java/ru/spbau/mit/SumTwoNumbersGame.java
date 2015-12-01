@@ -16,25 +16,21 @@ public class SumTwoNumbersGame implements Game {
     }
 
     @Override
-    public void onPlayerConnected(String id) {
-        synchronized (this) {
-            server.sendTo(id, "" + number1 + " " + number2);
-        }
+    public synchronized void onPlayerConnected(String id) {
+        server.sendTo(id, "" + number1 + " " + number2);
     }
 
     @Override
-    public void onPlayerSentMsg(String id, String msg) {
-        synchronized (this) {
-            int sum = Integer.parseInt(msg);
-            if (sum == number1 + number2) {
-                server.sendTo(id, "Right");
-                server.broadcast(id + " won");
-                number1 = Math.abs(rnd.nextInt()) + 1;
-                number2 = Math.abs(rnd.nextInt()) + 1;
-                server.broadcast("" + number1 + " " + number2);
-            } else {
-                server.sendTo(id, "Wrong");
-            }
+    public synchronized void onPlayerSentMsg(String id, String msg) {
+        int sum = Integer.parseInt(msg);
+        if (sum == number1 + number2) {
+            server.sendTo(id, "Right");
+            server.broadcast(id + " won");
+            number1 = Math.abs(rnd.nextInt()) + 1;
+            number2 = Math.abs(rnd.nextInt()) + 1;
+            server.broadcast("" + number1 + " " + number2);
+        } else {
+            server.sendTo(id, "Wrong");
         }
     }
 }
