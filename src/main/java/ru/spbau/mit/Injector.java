@@ -12,16 +12,7 @@ public class Injector {
      * `implementationClassNames` for concrete dependencies.
      */
 
-    private static ArrayList<Boolean> used = new ArrayList<>();
-
-    private static void resetUsed(int len) {
-        used.clear();
-        for (int i = 0; i < len; ++i) {
-            used.add(false);
-        }
-    }
-
-    private static Object myInitialize(String rootClassName, List<String> implementationClassNames) throws Exception {
+    private static Object myInitialize(String rootClassName, List<String> implementationClassNames, ArrayList<Boolean> used) throws Exception {
         Class<?> rootClass = Class.forName(rootClassName);
         Constructor constructorForRootClass = rootClass.getDeclaredConstructors()[0];
         Class<?>[] parametersForRootClass = constructorForRootClass.getParameterTypes();
@@ -45,7 +36,8 @@ public class Injector {
                         throw new AmbiguousImplementationException();
                     }
                     used.set(i, true);
-                    Object goodClass = myInitialize(currentClass.getName(), implementationClassNames);
+                    Object goodClass = myInitialize(currentClass.getName(), implementationClassNames, used);
+                    used.set(i, false);
                     myParameters.add(goodClass);
                     flag = true;
                 }
@@ -59,12 +51,15 @@ public class Injector {
     }
 
     public static Object initialize(String rootClassName, List<String> implementationClassNames) throws Exception {
+        ArrayList<Boolean> used = new ArrayList<>();
         ArrayList<String> myImplementationClassNames = new ArrayList<>();
         for (String s : implementationClassNames) {
             myImplementationClassNames.add(s);
         }
         myImplementationClassNames.add(rootClassName);
-        resetUsed(myImplementationClassNames.size());
-        return myInitialize(rootClassName, myImplementationClassNames);
+        for (int i = 0; i < myImplementationClassNames.size(); ++i) {
+            used.add(false);
+        }
+        return myInitialize(rootClassName, myImplementationClassNames, used);
     }
 }
