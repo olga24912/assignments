@@ -59,7 +59,12 @@ public class Injector {
     }
 
     public static Object initialize(String rootClassName, List<String> implementationClassNames) throws Exception {
-        resetUsed(implementationClassNames.size());
-        return myInitialize(rootClassName, implementationClassNames);
+        ArrayList<String> myImplementationClassNames = new ArrayList<>();
+        for (String s : implementationClassNames) {
+            myImplementationClassNames.add(s);
+        }
+        myImplementationClassNames.add(rootClassName);
+        resetUsed(myImplementationClassNames.size());
+        return myInitialize(rootClassName, myImplementationClassNames);
     }
 }

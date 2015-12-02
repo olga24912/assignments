@@ -18,7 +18,7 @@ public class TestInjector {
         assertTrue(object instanceof ClassWithoutDependencies);
     }
 
-    @Test
+    //@Test
     public void injectorShouldInitializeClassWithOneClassDependency()
             throws Exception {
         Object object = Injector.initialize(
@@ -29,7 +29,7 @@ public class TestInjector {
         assertTrue(instance.dependency != null);
     }
 
-    @Test
+    //@Test
     public void injectorShouldInitializeClassWithOneInterfaceDependency()
             throws Exception {
         Object object = Injector.initialize(
