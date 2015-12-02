@@ -22,12 +22,6 @@ public class Injector {
     }
 
     private static Object myInitialize(String rootClassName, List<String> implementationClassNames) throws Exception {
-        if (used == null) {
-            used = new ArrayList<>();
-            for (int i = 0; i < (int) implementationClassNames.size(); ++i) {
-                used.add(false);
-            }
-        }
         Class<?> rootClass = Class.forName(rootClassName);
         Constructor constructorForRootClass = rootClass.getDeclaredConstructors()[0];
         Class<?>[] parametersForRootClass = constructorForRootClass.getParameterTypes();
